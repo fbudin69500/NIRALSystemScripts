@@ -1,0 +1,63 @@
+#!/bin/tcsh
+set error = 0
+if( $# != 2 && $# != 3 ) then
+  set error = 1
+endif
+if( $# == 3 && "$3" != "-f" ) then
+  set error = 1
+endif
+if( $error == 1 ) then
+  echo "Usage: $0 email [listDirectoriesFile|DirectoryName] [-f]"
+  exit -1
+endif
+set erase = 0
+if( $# == 3 && "$3" == "-f" ) then
+  set erase = 1
+endif
+set email=$1
+set logDir=~/logs/diskUsage
+if( ! -d "$logDir" ) then
+  mkdir "$logDir"
+endif
+set listDirectories="$2"
+if( -d "$listDirectories" ) then
+  set IsDir = 1
+  set name=`echo $listDirectories| sed 's/\/$//'`
+  set name=`echo $name| sed 's/.*\///'`
+else
+  set IsDir = 0
+  set name=$listDirectories:t
+endif
+set startTimeStamp=`date '+%Y.%m.%d~%H:%M:%S'`
+echo $startTimeStamp
+set logDay=`date '+%Y.%m.%d'`
+set logFile="${logDir}${logDay}-${name}.log"
+echo "$logFile"
+if( -e "$logFile" ) then
+  echo "log file called $logFile already exists"
+  if( $erase == 1 ) then
+    echo "It will be erased"
+    rm $logFile
+  else
+    echo "Error: It will not be erased. Abort"
+    exit -1
+  endif
+endif
+if( $IsDir == 0 ) then
+  foreach i (`more "$listDirectories"`)
+    echo $i
+    set size=`du -sh $i`
+    echo $size
+    echo $size >> "$logFile"
+  end
+else
+  echo "$listDirectories"
+  du -h --max-depth=1 "$listDirectories" >> "$logFile"
+  cat $logFile
+endif
+set endTimeStamp=`date '+%Y.%m.%d~%H:%M:%S'`
+echo $endTimeStamp
+echo "Start: $startTimeStamp" >> "$logFile"
+echo "End: $endTimeStamp" >> "$logFile"
+mail -s "disk usage" $email < "$logFile"
+

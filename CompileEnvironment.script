@@ -1,0 +1,14 @@
+#!/bin/bash
+export CC=/usr/bin/gcc
+export CXX=/usr/bin/g++
+export QtVersion=4.8.5
+export QMAKE=/tools/Qt/Qt${QtVersion}/bin/qmake
+export CMAKE=/tools/CMake/cmake-2.8.12.2/bin/cmake
+export BUILD_TESTING=ON
+export CMAKE_BUILD_TYPE=Release
+export PythonVersion=2.7.7
+export PYTHONPATH=/tools/Python/Python-${PythonVersion}
+export PYTHON_INCLUDE_DIR=$PYTHONPATH/include/python2.7
+export PYTHON_LIBRARY=$PYTHONPATH/lib/libpython2.7.so
+export PATH=$PYTHONPATH/bin:${PATH}
+export LD_LIBRARY_PATH=$PYTHONPATH/lib:${LD_LIBRARY_PATH}

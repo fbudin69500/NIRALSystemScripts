@@ -1,0 +1,23 @@
+#!/bin/tcsh
+if( $# != 1 ) then
+  echo "Usage: $0 Directory"
+  exit()
+endif
+set dir=`pwd`
+
+set first = `echo $0 | head -c 1`
+if( "$first" != "/" ) then
+  set commandLine = $dir/$0
+else
+  set commandLine = $0
+endif
+cd $1
+echo $1
+foreach i (*)
+  if( -d $i) then
+    $commandLine $1/$i
+  endif
+  touch $i
+end
+cd $dir
+

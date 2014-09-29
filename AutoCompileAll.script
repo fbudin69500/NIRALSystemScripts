@@ -1,0 +1,10 @@
+#!/bin/bash
+args=`more ~/LocalWork/SystemScripts/Resources/SlicerArgs.txt`
+~/LocalWork/SystemScripts/Scripts/AutoCompileSlicerTrunk.script $args
+args=`more ~/LocalWork/SystemScripts/Resources/VTKArgs.txt`
+~/LocalWork/SystemScripts/Scripts/AutoCompileLatestVTK.script $args
+args=`more ~/LocalWork/SystemScripts/Resources/ITKArgs.txt`
+~/LocalWork/SystemScripts/Scripts/AutoCompileLatestITK.script $args
+args=`more ~/LocalWork/SystemScripts/Resources/SEMArgs.txt`
+~/LocalWork/SystemScripts/Scripts/AutoCompileLatestSEM.script $args
+

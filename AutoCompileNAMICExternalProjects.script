@@ -1,0 +1,89 @@
+#!/bin/bash
+if [ $# != 2 ]
+then
+  echo "Usage: $0 RootDir email"
+  exit -1
+endif
+fi
+scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
+source $scriptDIR/CompileEnvironment.script
+currentDir=`pwd`
+echo "Current directory: ${currentDir}"
+RootDir=$1
+echo "Root directory: ${RootDir}"
+email=$2
+echo "email: $email"
+logDir=~/logs/compilationNAMICExternalProjects
+echo "Log directory: ${logDir}"
+if [ ! -d $logDir ]
+then
+  mkdir $logDir
+fi
+cd $RootDir
+#Update
+echo "Git clone"
+SOURCE_DIR=NAMICExternalProjects
+if [ ! -d $SOURCE_DIR ]
+then
+  git clone git@github.com:fbudin69500/NAMICExternalProjects.git $SOURCE_DIR
+else
+  cd $SOURCE_DIR
+  git pull
+fi
+cd $RootDir
+#Recompile
+echo "qmake: ${QMAKE}"
+echo "cmake: ${CMAKE}"
+echo "Build testing: ${BUILD_TESTING}"
+echo "cmake_build_type: ${CMAKE_BUILD_TYPE}"
+logDay=`date '+%Y.%m.%d'`
+echo "log day: $logDay"
+nbThreads=8
+echo "#Threads: ${nbThreads}"
+BINARY_DIR=${SOURCE_DIR}-build
+if [ -d $BINARY_DIR ]
+then
+  echo "Build directory exists: $BINARY_DIR"
+  echo "Removing it"
+  rm -rf $BINARY_DIR
+fi
+echo "Creating build directory: $BINARY_DIR"
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+logFile="${logDir}/NAMICExternalProjects-${logDay}.log"
+echo "Log file: $logFile"
+echo "Configuration"
+CC=$CC CXX=$CXX $CMAKE \
+   -DBUILD_TESTING:BOOL=$BUILD_TESTING \
+   -DQT_QMAKE_EXECUTABLE:FILEPATH=$QMAKE \
+   -DCMAKE_BUILD_TYPE:STRING=$CMAKE_BUILD_TYPE \
+   -DBUILD_ABC:BOOL=TRUE \
+   -DBUILD_ANTs:BOOL=TRUE \
+   -DBUILD_AtlasWerks:BOOL=TRUE \
+   -DBUILD_BRAINSTools:BOOL=TRUE \
+   -DBUILD_DTIAtlasBuilder:BOOL=TRUE \
+   -DBUILD_DTIPrep:BOOL=TRUE \
+   -DBUILD_DTIProcess:BOOL=TRUE \
+   -DBUILD_DTIReg:BOOL=TRUE \
+   -DBUILD_DTI_Tract_Stat:BOOL=TRUE \
+   -DBUILD_FiberViewerLight:BOOL=TRUE \
+   -DBUILD_ITKTransformTools:BOOL=TRUE \
+   -DBUILD_MriWatcher:BOOL=TRUE \
+   -DBUILD_NeosegPipeline:BOOL=TRUE \
+   -DBUILD_ResampleDTIlogEuclidean:BOOL=TRUE \
+   -DBUILD_SPHARM-PDM:BOOL=TRUE \
+   -DBUILD_ShapePopulationViewer:BOOL=TRUE \
+   -DBUILD_SlicerCLI:BOOL=TRUE \
+   -DBUILD_SlicerJointRicianAnisotropicLMMSEFilter:BOOL=TRUE \
+   -DBUILD_UnbiasedNonLocalMeans:BOOL=TRUE \
+   -DBUILD_neoseg:BOOL=TRUE \
+   -DBUILD_niral_utilities:BOOL=TRUE \
+   -DBUILD_python:BOOL=TRUE \
+   -DBUILD_SimpleITK:BOOL=TRUE \
+   -DUSE_VTK_6:BOOL=TRUE \
+   ../$SOURCE_DIR &> $logFile
+echo "Compilation"
+make -j $nbThreads >> $logFile 2>&1
+mail -s "Compilation NAMICExternalProjects $logDay" $email < "$logFile"
+cd $currentDir
+

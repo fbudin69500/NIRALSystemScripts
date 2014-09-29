@@ -1,0 +1,112 @@
+#!/bin/bash
+if [ $# != 3 ]
+then
+  echo "Usage: $0 VTKSourceRootDir VTKInstallRootDir email"
+  exit -1
+fi
+VTKSourceRootDir=$1
+echo "VTKSourceRootDir: $VTKSourceRootDir"
+VTKInstallRootDir=$2
+echo "VTKInstallRootDir: $VTKInstallRootDir"
+email=$3
+echo "email: $email"
+scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
+source $scriptDIR/CompileEnvironment.script
+logDir=~/logs/compilationVTK
+echo "Log directory: ${logDir}"
+if [ ! -d $logDir ]
+then
+  mkdir $logDir
+fi
+currentDir=`pwd`
+echo "Current directory: ${currentDir}"
+#Download VTK
+VTKSourceDir=VTK-Auto
+cd $VTKSourceRootDir
+if [ ! -d $VTKSourceDir ]
+then
+  git clone http://vtk.org/VTK.git $VTKSourceDir
+  cd $VTKSourceDir
+else
+  cd $VTKSourceDir
+  git pull
+fi
+#get last tag
+tag=`git describe --abbrev=0 --tags`
+echo "Last tag: $tag"
+tagNum=${tag#"v"}
+echo "Tag#: $tagNum"
+#If Release Candidate, do not compile
+if [ "`echo $tag |grep rc`" != "" ]
+then
+  echo "Current latest tag is a release candidate"
+  exit 0
+fi
+#If tag is already compiled on the system, do not compile
+VTKInstallDir=$VTKInstallRootDir/VTK_${tagNum}
+git checkout tags/$tag 
+if [ -d $VTKInstallDir ]
+then
+  echo "VTK tag ($tag) already compiled"
+  exit 0
+fi
+#Build VTK both in shared and static libraries
+logDay=`date '+%Y.%m.%d'`
+echo "log day: $logDay"
+nbThreads=8
+echo "#Threads: ${nbThreads}"
+echo "cmake: ${CMAKE}"
+echo "Build testing: ${BUILD_TESTING}"
+echo "cmake_build_type: ${CMAKE_BUILD_TYPE}"
+for shared in OFF ON
+do
+  echo "Shared: $shared"
+  if [ $shared == ON ]
+  then
+    suff="dyn-Qt${QtVersion}-${PythonVersion}"
+    echo "qmake: ${QMAKE}"
+    echo "python install directory: $PYTHONINSTALL"
+    PYTHON=$PYTHONPATH/bin/python
+    echo "python: ${PYTHON}"
+    QtPythonOptions="-DQT_QMAKE_EXECUTABLE:PATH=${QMAKE} \
+                     -DPYTHON_EXECUTABLE:PATH=${PYTHON} \
+                     -DVTK_WRAP_PYTHON:BOOL=TRUE \
+                     -DVTK_Group_Qt:BOOL=TRUE \
+                     -DPYTHON_INCLUDE_DIR:PATH=$PYTHONPATH/include/python2.7 \
+                     -DPYTHON_LIBRARY:PATH=$PYTHONPATH/lib/libpython2.7.so"
+    echo "QtPythonOptions: ${QtPythonOptions}"
+  else
+    suff="stat"
+    QtPythonOptions=""
+  fi
+  echo "Suffix: $suff"
+  #Check if build directory exists.
+  #Removes if and recreate it
+  VTKBuildDir=$VTKSourceRootDir/VTK-Auto-$tagNum-build
+  echo "VTK Build Directory: $VTKBuildDir"
+  if [ -d $VTKBuildDir ]
+  then
+    echo "Removing existing build directory: $VTKBuildDir"
+    rm -rf $VTKBuildDir
+  fi
+  mkdir $VTKBuildDir
+  cd $VTKBuildDir
+  logFile="${logDir}/VTK${tag}-${suff}-${logDay}.log"
+  echo "Log file: $logFile"
+  #Configure VTK
+  echo "Configure VTK"
+  CC=${CC} CXX=${CXX} ${CMAKE} \
+      -DBUILD_TESTING:BOOL=${BUILD_TESTING} \
+      -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} \
+      -DCMAKE_INSTALL_PREFIX:PATH=$VTKInstallDir/VTK_${tagNum}_linux64_${suff}_${CMAKE_BUILD_TYPE} \
+      -DBUILD_SHARED_LIBS:BOOL=$shared \
+      $QtPythonOptions \
+      ../$VTKSourceDir &> $logFile
+  #Compile and install VTK
+  echo "Compilation"
+  make -j ${nbThreads} >> $logFile 2>&1
+  make install -j ${nbThreads} >> $logFile 2>&1
+  mail -s "Compilation VTK ${tag}-${suff} ${logDay}" $email < "$logFile"
+done
+cd $currentDir
+
