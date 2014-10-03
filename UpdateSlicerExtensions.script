@@ -6,13 +6,8 @@ createNewBranch ()
   #Create new branch for update
   if [ `git branch | grep -c update-$tool` -ne 0 ]
   then
-  echo "Removing existing local branch: update-$tool"
-  git branch -D update-$tool
-  fi
-  if [ `git branch | grep -c "origin/update-$tool"` -ne 0 ]
-  then
-    echo "Removing existing remote branch: update-$tool"
-    git push origin :update-$tool
+    echo "Removing existing local branch: update-$tool"
+    git branch -D update-$tool
   fi
   git checkout -B update-$tool master
 }
@@ -34,13 +29,18 @@ updateExtensions ()
 {
   if [ "$2" == "push" ]
   then
+    if [ `git branch | grep -c "origin/update-$tool"` -ne 0 ]
+    then
+    echo "Removing existing remote branch: update-$tool"
+      git push origin :update-$tool
+    fi
     git push origin update-$1 --force
   fi
 }
 
-if [ $# -ne 1 ] && ( [ $# -ne 2 ] || [ $2 != "push" ] )
+if [ $# -ne 1 ] && ( [ $# -ne 2 ] || ([ "$2" != "push" ] && [ "$2" != "clean" ]) )
 then
-  echo "Usage: $0 SlicerExtensionBuildDirectory [push]"
+  echo "Usage: $0 SlicerExtensionBuildDirectory [push|clean]"
   exit 1
 fi
 currentDir=`pwd`
@@ -58,6 +58,28 @@ sourceDir=${var#"Slicer_EXTENSION_DESCRIPTION_DIR:PATH="}
 echo "Slicer Extension Source Directory: $sourceDir"
 #Update ExtensionsIndex source code
 cd $sourceDir
+#Clean i $2 == "clean"
+if [ "$2" == "clean" ]
+then
+  git fetch origin
+  git checkout master
+  var=(`git branch | grep "update-"`)
+  for branchName in `git branch | grep "update-"`
+  do
+    name=`expr "$branchName" : ".*\(update-.*\) *$"`
+    if [ "$name" != "" ]; then
+      echo "Removing existing local branch: $branchName"
+      git branch -D $branchName
+    fi
+  done
+  for branchName in `git branch -a | grep "origin/update-"`
+  do
+    name=`expr "$branchName" : ".*\(update-.*\) *$"`
+    echo "Removing existing remote branch: $name"
+    git push origin :$name
+  done
+  exit 0
+fi
 echo "Update SlicerExtensions"
 if [ "`git remote | grep -c upstream`" -eq 0 ]
 then
@@ -151,7 +173,7 @@ do
     echo "Current Revision: $currentrevision"
     #if mismatch, update description file revision
     if [ $currentrevision -gt $descriptRevision ] ;then
-      #get tool logs and copy them to the NAMICExternalProjects commit message
+      #get tool logs and copy them to the ExtensionIndex commit message
       diffmessage=""
       for i in `seq $currentrevision -1 $descriptRevision`
       do
@@ -159,7 +181,7 @@ do
       done
       cd $sourceDir
       createNewBranch $tool
-      updateDescriptionFile $descriptionFile $descriptRevision $currentgithash
+      updateDescriptionFile $descriptionFile $descriptRevision $currentrevision
       git add $descriptionFile
       git commit -m "ENH: Update $tool from revision $descriptRevision to $currentrevision" -m "" -m "$diffmessage"
       #Update Extensions
