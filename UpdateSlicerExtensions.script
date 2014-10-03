@@ -1,0 +1,175 @@
+#!/bin/bash
+
+createNewBranch ()
+{
+  tool=$1
+  #Create new branch for update
+  if [ `git branch | grep -c update-$tool` -ne 0 ]
+  then
+  echo "Removing existing local branch: update-$tool"
+  git branch -D update-$tool
+  fi
+  if [ `git branch | grep -c "origin/update-$tool"` -ne 0 ]
+  then
+    echo "Removing existing remote branch: update-$tool"
+    git push origin :update-$tool
+  fi
+  git checkout -B update-$tool master
+}
+
+updateDescriptionFile ()
+{
+  descriptionFile=$1
+  descriptRevision=$2
+  currentRevision=$3
+  #Replace hash in s4ext description file
+  if [ "$OSTYPE" == "linux" ]; then
+    sed -i "s/$descriptRevision/$currentRevision/g" $descriptionFile
+  else
+    sed -i '' "s/$descriptRevision/$currentRevision/g" $descriptionFile
+  fi
+}
+
+updateExtensions ()
+{
+  if [ "$2" == "push" ]
+  then
+    git push origin update-$1 --force
+  fi
+}
+
+if [ $# -ne 1 ] && ( [ $# -ne 2 ] || [ $2 != "push" ] )
+then
+  echo "Usage: $0 SlicerExtensionBuildDirectory [push]"
+  exit 1
+fi
+currentDir=`pwd`
+#Define all our tools included in ExtensionsIndex
+toolsNIRALList=(DTIAtlasBuilder DTIPrep DTIProcess DTIAtlasFiberAnalyzer FiberViewerLight \
+                ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance)
+#Find real binary directory
+cd $1
+var=`more CMakeCache.txt | grep SlicerExtensions_BINARY_DIR`
+binaryDir=${var#"SlicerExtensions_BINARY_DIR:STATIC="}
+echo "Slicer Extension Build Directory: $binaryDir"
+#Find source dir containing s4ext files
+var=`more CMakeCache.txt | grep Slicer_EXTENSION_DESCRIPTION_DIR`
+sourceDir=${var#"Slicer_EXTENSION_DESCRIPTION_DIR:PATH="}
+echo "Slicer Extension Source Directory: $sourceDir"
+#Update ExtensionsIndex source code
+cd $sourceDir
+echo "Update SlicerExtensions"
+if [ "`git remote | grep -c upstream`" -eq 0 ]
+then
+  git remote add upstream git://github.com/Slicer/ExtensionsIndex
+fi
+git fetch upstream
+git checkout master
+git reset --hard upstream/master
+git push origin master
+#For all the tools we want to update, go download latest version and compare with
+#version that is currently included in this project (ExtensionsIndex). If a
+#newer version exists, replace current version included in this project with
+#latest version
+for tool in ${toolsNIRALList[@]}
+do
+  cd $binaryDir
+  echo "-----------------------------------------------------"
+  echo "Tool: $tool"
+  descriptionFile=$sourceDir/${tool}.s4ext
+  if [ ! -e $descriptionFile ]
+  then
+    echo "Description file $descriptionFile not found. Skipping $tool"
+    continue
+  fi
+  scm=`grep "scm" $descriptionFile`
+  descriptRevision=`grep "scmrevision" $descriptionFile`
+  descriptRevision=`expr "$descriptRevision" : " *scmrevision *\(\([a-f]*[0-9]*\)*\) *$"`
+  echo "Current Description file Revision: $descriptRevision"
+  repository=`grep "scmurl" $descriptionFile`
+  repository=`expr "$repository" : " *scmurl *\([a-z].*\)$"`
+  echo "Repository: $repository"
+  if [ "`echo $scm | grep -ci git`" -gt 0 ]
+  then
+    echo "$tool is a git project"
+    #Get source code
+    if [ ! -d $tool ] || [ ! "$(ls -A $tool)" ]
+    then
+      echo "git Repository: $repository"
+      git clone $repository $tool
+      cd $binaryDir/$tool
+    else
+      cd $binaryDir/$tool
+      echo "Pulling"
+      git pull
+    fi
+    #get current (=latest) commit hash
+    currentgithash=`git rev-parse HEAD`
+    echo "Current Project Git hash: $currentgithash"
+    timeStampDescription=`git log -1 --format="%ct" $descriptRevision`
+    echo "Description time stamp: `git log -1 --format="%ci" $descriptRevision` - UNIX format: $timeStampDescription"
+    timeStampCurrent=`git log -1 --format="%ct" $currentgithash`
+    echo "Current time stamp: `git log -1 --format="%ci" $currentgithash` - UNIX format: $timeStampCurrent"
+    #if description commit hash is older than the last commit, we update the description file
+    if [ "$timeStampCurrent" -gt "$timeStampDescription" ]; then
+      #Create github diff link
+      repository=`expr "$repository" : "\(.*\)\.git"`
+      repository=${repository#"git://github.com/"}
+      diffmessage="https://www.github.com/$repository/compare/$descriptRevision%E2%80%A6$currentgithash"
+      cd $sourceDir
+      createNewBranch $tool
+      updateDescriptionFile $descriptionFile $descriptRevision $currentgithash
+      git add $descriptionFile
+      git commit -m "ENH: Update $tool from revision $descriptRevision to $currentgithash" -m "" -m "$diffmessage"
+      #Update Extensions
+      updateExtensions $tool $2
+    fi
+    continue
+  fi
+  if [ "`echo $scm | grep -ci svn`" -gt 0  ]
+  then
+    echo "$tool is an SVN project"
+    ###get username and password from description file
+    svnUser=`grep "svnusername" $descriptionFile`
+    svnUser="--username "`expr "$svnUser" : " *svnusername *\(\([a-z]*[0-9]*\)*\) *$"`
+    echo "SVN User Name: $svnUser"
+    svnPassword=`grep "svnpassword" $descriptionFile`
+    svnPassword="--password "`expr "$svnPassword" : " *svnpassword *\(\([a-z]*[0-9]*\)*\) *$"`
+    echo "SVN Password: $svnPassword"
+    #checkout or update project
+    if [ ! -d $tool ] || [ ! "$(ls -A $tool)" ]
+    then
+      echo "SVN Repository: $repository"
+      svn checkout $svnUser $svnPassword $repository $tool
+      cd $binaryDir/$tool
+    else
+      cd $binaryDir/$tool
+      svn update $svnUser $svnPassword
+    fi
+    #get current revision number
+    currentrevision=`svnversion`
+    echo "Current Revision: $currentrevision"
+    #if mismatch, update description file revision
+    if [ $currentrevision -gt $descriptRevision ] ;then
+      #get tool logs and copy them to the NAMICExternalProjects commit message
+      diffmessage=""
+      for i in `seq $currentrevision -1 $descriptRevision`
+      do
+        diffmessage=$diffmessage`svn log $svnUser $svnPassword -r $i`$'\n'
+      done
+      cd $sourceDir
+      createNewBranch $tool
+      updateDescriptionFile $descriptionFile $descriptRevision $currentgithash
+      git add $descriptionFile
+      git commit -m "ENH: Update $tool from revision $descriptRevision to $currentrevision" -m "" -m "$diffmessage"
+      #Update Extensions
+      updateExtensions $tool $2
+    fi
+    continue
+  else
+    echo "$tool is of an unknown type. Skipping"
+  fi
+done
+cd $SOURCE_DIR
+
+cd $currentDir
