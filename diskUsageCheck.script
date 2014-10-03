@@ -1,25 +1,25 @@
 #!/bin/tcsh
 set error = 0
-if( $# != 2 && $# != 3 ) then
+if( $# != 3 && $# != 4 ) then
   set error = 1
 endif
-if( $# == 3 && "$3" != "-f" ) then
+if( $# == 4 && "$4" != "-f" ) then
   set error = 1
 endif
 if( $error == 1 ) then
-  echo "Usage: $0 email [listDirectoriesFile|DirectoryName] [-f]"
+  echo "Usage: $0 logDir email [listDirectoriesFile|DirectoryName] [-f]"
   exit -1
 endif
 set erase = 0
-if( $# == 3 && "$3" == "-f" ) then
+if( $# == 4 && "$4" == "-f" ) then
   set erase = 1
 endif
-set email=$1
-set logDir=~/logs/diskUsage
+set email=$2
+set logDir=$1
 if( ! -d "$logDir" ) then
   mkdir "$logDir"
 endif
-set listDirectories="$2"
+set listDirectories="$3"
 if( -d "$listDirectories" ) then
   set IsDir = 1
   set name=`echo $listDirectories| sed 's/\/$//'`

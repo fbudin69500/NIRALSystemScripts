@@ -1,18 +1,18 @@
 #!/bin/bash
-if [ $# != 3 ]
+if [ $# != 4 ]
 then
-  echo "Usage: $0 ITKSourceRootDir ITKInstallRootDir email"
+  echo "Usage: $0 ITKSourceRootDir ITKInstallRootDir logDir email"
   exit -1
 fi
 ITKSourceRootDir=$1
 echo "ITKSourceRootDir: $ITKSourceRootDir"
 ITKInstallRootDir=$2
 echo "ITKInstallRootDir: $ITKInstallRootDir"
-email=$3
+email=$4
 echo "email: $email"
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
 source $scriptDIR/CompileEnvironment.script
-logDir=~/logs/compilationITK
+logDir=$3
 echo "Log directory: ${logDir}"
 if [ ! -d $logDir ]
 then

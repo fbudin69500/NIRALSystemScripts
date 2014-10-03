@@ -1,19 +1,19 @@
 #!/bin/bash
-if [ $# != 2 ]
+if [ $# != 3 ]
 then
-  echo "Usage: $0 SlicerRootDir email"
+  echo "Usage: $0 SlicerRootDir logDir email"
   exit -1
 fi
 SlicerRootDir=$1
 echo "Slicer root directory: ${SlicerRootDir}"
-email=$2
+logDir=$2
+echo "Log directory: $logDir"
+email=$3
 echo "email: $email"
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
 source $scriptDIR/CompileEnvironment.script
 currentDir=`pwd`
 echo "Current directory: ${currentDir}"
-logDir=~/logs/compilationSlicer
-echo "Log directory: $logDir"
 if [ ! -d $logDir ]
 then
   mkdir $logDir
@@ -34,28 +34,23 @@ logDay=`date '+%Y.%m.%d'`
 echo "log day: $logDay"
 nbThreads=8
 echo "#Threads: ${nbThreads}"
-BINARY_DIR=Slicer4-trunk-build-VTK${vtkversion}
-for vtkversion in 6
-do
-  echo "VTK version: ${vtkversion}"
-  if [ -d $BINARY_DIR ]
-  then
-    echo "Build directory exists: $BINARY_DIR"
-    echo "Removing it"
-    rm -rf $BINARY_DIR
-  fi
-  echo "Creating build directory: BINARY_DIR"
-  mkdir $BINARY_DIR
-  cd $BINARY_DIR
-  VTK_VERSION_MAJOR=${vtkversion}
-  logFile="${logDir}/Slicer-${logDay}-VTK${vtkversion}.log"
-  echo "Log file: $logFile"
-  echo "Configuration"
-  CC=${CC} CXX=${CXX} ${CMAKE} -DBUILD_TESTING:BOOL=${BUILD_TESTING} -DQT_QMAKE_EXECUTABLE:FILEPATH=${QMAKE} \
-     -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DVTK_VERSION_MAJOR:STRING=${VTK_VERSION_MAJOR} ../${SLICER_SOURCE} &> $logFile
-  echo "Compilation"
-  make -j ${nbThreads} >> $logFile 2>&1
-  mail -s "Compilation Slicer ${logDay}-VTK${vtkversion}" $email < "$logFile"
-  cd ..
-done
+BINARY_DIR=Slicer4-trunk-build
+if [ -d $BINARY_DIR ]
+then
+  echo "Build directory exists: $BINARY_DIR"
+  echo "Removing it"
+  rm -rf $BINARY_DIR
+fi
+echo "Creating build directory: BINARY_DIR"
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+VTK_VERSION_MAJOR=6
+logFile="${logDir}/Slicer-${logDay}.log"
+echo "Log file: $logFile"
+echo "Configuration"
+CC=${CC} CXX=${CXX} ${CMAKE} -DBUILD_TESTING:BOOL=${BUILD_TESTING} -DQT_QMAKE_EXECUTABLE:FILEPATH=${QMAKE} \
+   -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DVTK_VERSION_MAJOR:STRING=${VTK_VERSION_MAJOR} ../${SLICER_SOURCE} &> $logFile
+echo "Compilation"
+make -j ${nbThreads} >> $logFile 2>&1
+mail -s "Compilation Slicer ${logDay}" $email < "$logFile"
 cd $currentDir

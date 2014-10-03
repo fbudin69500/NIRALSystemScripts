@@ -1,7 +1,7 @@
 #!/bin/bash
-if [ $# != 4 ]
+if [ $# != 5 ]
 then
-  echo "Usage: $0 SEMRootDir ITKSourceRootDir ITKInstallRootDir email"
+  echo "Usage: $0 SEMRootDir ITKSourceRootDir ITKInstallRootDir logDir email"
   exit -1
 fi
 SEMRootDir=$1
@@ -10,11 +10,11 @@ ITKSourceRootDir=$2
 echo "ITKSourceRootDir: $ITKSourceRootDir"
 ITKInstallRootDir=$3
 echo "ITKInstallRootDir: $ITKInstallRootDir"
-email=$4
+email=$5
 echo "email: $email"
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
 source $scriptDIR/CompileEnvironment.script
-logDir=~/logs/compilationSEM
+logDir=$4
 echo "Log directory: ${logDir}"
 if [ ! -d $logDir ]
 then
