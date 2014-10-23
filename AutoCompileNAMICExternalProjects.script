@@ -22,7 +22,7 @@ fi
 cd $RootDir
 #Update
 echo "Git clone"
-SOURCE_DIR=NAMICExternalProjects
+SOURCE_DIR=NAMICExternalProjects-Auto
 if [ ! -d $SOURCE_DIR ]
 then
   git clone git@github.com:fbudin69500/NAMICExternalProjects.git $SOURCE_DIR
