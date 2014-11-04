@@ -1,23 +1,15 @@
 #!/bin/bash
-if [ $# != 3 ]
+if [ $# != 1 ]
 then
-  echo "Usage: $0 SlicerRootDir logDir email"
-  exit -1
+  echo "Usage: $0 SlicerRootDir"
+  exit 1
 fi
 SlicerRootDir=$1
 echo "Slicer root directory: ${SlicerRootDir}"
-logDir=$2
-echo "Log directory: $logDir"
-email=$3
-echo "email: $email"
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
 source $scriptDIR/CompileEnvironment.script
 currentDir=`pwd`
 echo "Current directory: ${currentDir}"
-if [ ! -d $logDir ]
-then
-  mkdir $logDir
-fi
 cd $SlicerRootDir
 #Update
 echo "SVN update"
@@ -30,8 +22,6 @@ echo "qmake: ${QMAKE}"
 echo "cmake: ${CMAKE}"
 echo "Build testing: ${BUILD_TESTING}"
 echo "cmake_build_type: ${CMAKE_BUILD_TYPE}"
-logDay=`date '+%Y.%m.%d'`
-echo "log day: $logDay"
 nbThreads=8
 echo "#Threads: ${nbThreads}"
 BINARY_DIR=Slicer4-trunk-build
@@ -45,12 +35,9 @@ echo "Creating build directory: BINARY_DIR"
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 VTK_VERSION_MAJOR=6
-logFile="${logDir}/Slicer-${logDay}.log"
-echo "Log file: $logFile"
 echo "Configuration"
 CC=${CC} CXX=${CXX} ${CMAKE} -DBUILD_TESTING:BOOL=${BUILD_TESTING} -DQT_QMAKE_EXECUTABLE:FILEPATH=${QMAKE} \
-   -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DVTK_VERSION_MAJOR:STRING=${VTK_VERSION_MAJOR} ../${SLICER_SOURCE} &> $logFile
+   -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DVTK_VERSION_MAJOR:STRING=${VTK_VERSION_MAJOR} ../${SLICER_SOURCE}
 echo "Compilation"
-make -j ${nbThreads} >> $logFile 2>&1
-mail -s "Compilation Slicer ${logDay}" $email < "$logFile"
+make -j ${nbThreads}
 cd $currentDir

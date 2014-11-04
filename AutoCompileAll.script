@@ -1,10 +1,85 @@
 #!/bin/bash
-args=`more ~/LocalWork/SystemScripts/Resources/SlicerArgs.txt`
-~/LocalWork/SystemScripts/Scripts/AutoCompileSlicerTrunk.script $args
-args=`more ~/LocalWork/SystemScripts/Resources/VTKArgs.txt`
-~/LocalWork/SystemScripts/Scripts/AutoCompileLatestVTK.script $args
-args=`more ~/LocalWork/SystemScripts/Resources/ITKArgs.txt`
-~/LocalWork/SystemScripts/Scripts/AutoCompileLatestITK.script $args
-args=`more ~/LocalWork/SystemScripts/Resources/SEMArgs.txt`
-~/LocalWork/SystemScripts/Scripts/AutoCompileLatestSEM.script $args
+
+function compileLib
+{
+  args=(`more ${2}/../Resources/${1}Args.txt`)
+  logDir=${args[0]}
+  args=("${args[@]:1}")
+  if [ ! -d $logDir ]
+  then
+    mkdir $logDir
+  fi
+  echo "Log directory: ${logDir}"
+  for shared in ON OFF
+  do
+    if [ $shared == ON ]
+    then
+      suff="dyn"
+    else
+      suff="stat"
+    fi
+    logFile="${logDir}/${1}${tag}-${suff}-${logDay}.log"
+    echo "Log file: $logFile"
+    `${2}/AutoCompileLatest${1}.script ${args[@]} $shared > $logFile 2>&1`
+    if [ "$?" -eq "0" ]
+    then
+      message="Compiled"
+    else
+      message="Abort"
+    fi
+    tail -n 100 "$logFile"| mail -s "$message ${1}${tag}-${suff} ${logDay} - $logFile" $email
+  done
+}
+
+function compileTool
+{
+  args=(`more ${2}/../Resources/${1}Args.txt`)
+  logDir=${args[0]}
+  args=("${args[@]:1}")
+  if [ ! -d $logDir ]
+  then
+    mkdir $logDir
+  fi
+  echo "Log directory: ${logDir}"
+  logFile="${logDir}/${1}${tag}-${logDay}.log"
+  echo "Log file: $logFile"
+  `${2}/AutoCompile${1}.script ${args[@]} > $logFile 2>&1`
+  if [ "$?" -eq "0" ]
+  then
+    message="Compiled"
+  else
+    message="Abort"
+  fi
+  tail -n 100 "$logFile"| mail -s "$message ${1}${tag} ${logDay} - $logFile" $email
+}
+
+if [ $# != 2 ]
+then
+  echo "Usage: $0 email libs/tools"
+  exit 1
+fi
+compilationOptions=$2
+email=$1
+echo "email: $email"
+logDay=`date '+%Y.%m.%d'`
+echo "log day: $logDay"
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+#args=`more ~/LocalWork/SystemScripts/Resources/SlicerArgs.txt`
+#~/LocalWork/SystemScripts/Scripts/AutoCompileSlicerTrunk.script $args
+if [ $compilationOptions == "libs" ]
+then
+  compileTool Slicer $DIR
+  compileLib VTK $DIR
+  compileLib ITK $DIR
+  compileLib SEM $DIR
+elif [ $compilationOptions == "tools" ]
+then
+  compileTool NAMICExternalProjects $DIR
+else
+  echo "Usage: $0 email libs/tools"
+  exit 2
+fi
+
 

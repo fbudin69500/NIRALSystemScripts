@@ -1,8 +1,9 @@
 #!/bin/bash
-if [ $# != 5 ]
+if [ $# != 4 ]
 then
-  echo "Usage: $0 SEMRootDir ITKSourceRootDir ITKInstallRootDir logDir email"
-  exit -1
+  echo "Usage: $0 SEMRootDir ITKSourceRootDir ITKInstallRootDir [ON/OFF]"
+  echo "ON/OFF: Build shared libraries"
+  exit 2
 fi
 SEMRootDir=$1
 echo "SEMRootDir: $SEMRootDir"
@@ -10,16 +11,8 @@ ITKSourceRootDir=$2
 echo "ITKSourceRootDir: $ITKSourceRootDir"
 ITKInstallRootDir=$3
 echo "ITKInstallRootDir: $ITKInstallRootDir"
-email=$5
-echo "email: $email"
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
 source $scriptDIR/CompileEnvironment.script
-logDir=$4
-echo "Log directory: ${logDir}"
-if [ ! -d $logDir ]
-then
-  mkdir $logDir
-fi
 currentDir=`pwd`
 echo "Current directory: ${currentDir}"
 #Check ITK tag
@@ -32,7 +25,7 @@ echo "Last tag (ITK): $tag"
 if [ "`echo $tag |grep rc`" != "" ]
 then
   echo "Current latest tag is a release candidate"
-  exit 0
+  exit 1
 fi
 #If tag is not already compiled on the system, exit
 #SlicerExecutionModel needs ITK
@@ -41,7 +34,7 @@ ITKInstallDir=$ITKInstallRootDir/ITK$tag
 if [ ! -d $ITKInstallDir ]
 then
   echo "ITK tag ($tag) is not compiled. SlicerExecutionModel needs it"
-  exit 1
+  exit 3
 fi
 #Update SlicerExecutionModel that will be recompiled after
 SEMSourceDir=SlicerExecutionModel
@@ -54,50 +47,45 @@ else
   git pull
 fi
 #Build SlicerExecutionModel both in shared and static libraries
-for shared in ON OFF
-do
-  echo "Shared: $shared"
-  if [ $shared == ON ]
-  then
-    suff="dyn"
-  else
-    suff="stat"
-  fi
-  echo "Suffix: $suff"
-  tagNum=${tag#"v"}
-  echo "ITK Tag#: $tagNum"
-  #tagMinor=${tagNum%"."}
-  tagMinor=${tagNum:0:3}
-  echo "ITK Tag#  Major.Minor: $tagMinor"
-  echo "cmake: ${CMAKE}"
-  echo "Build testing: ${BUILD_TESTING}"
-  echo "cmake_build_type: ${CMAKE_BUILD_TYPE}"
-  logDay=`date '+%Y.%m.%d'`
-  echo "log day: $logDay"
-  nbThreads=8
-  echo "#Threads: ${nbThreads}"
-  #SlicerExecutionModel
-  #Configure
-  SEMBuildDir=${SEMRootDir}/SlicerExecutionModel-build_ITK${tag}-${suff}
-  if [ $SEMBuildDir ]
-  then
-    rm -rf $SEMBuildDir
-  fi
-  mkdir $SEMBuildDir
-  cd $SEMBuildDir
-  logFile="${logDir}/SEM_ITK${tag}-${suff}-${logDay}.log"
-  echo "Log file: $logFile"
-  echo "Configure SlicerExecutionModel"
-  CC=${CC} CXX=${CXX} ${CMAKE} \
-      -DBUILD_TESTING:BOOL=${BUILD_TESTING}
-      -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} \
-      -DITK_DIR:PATH=$ITKInstallDir/ITK${tag}_THL64_${suff}/lib/cmake/ITK-${tagMinor} \
-      -DBUILD_SHARED_LIBS:BOOL=$shared \
-      ../$SEMSourceDir &> $logFile
-  #Compile
-  echo "Compilation"
-  make -j ${nbThreads} >> $logFile 2>&1
-  mail -s "Compilation SlicerExecutionModel ITK${tag}-${suff} ${logDay}" $email < "$logFile"
-done
+shared=$4
+echo "Shared: $shared"
+if [ $shared == ON ]
+then
+  suff="dyn"
+else
+  suff="stat"
+fi
+echo "Suffix: $suff"
+tagNum=${tag#"v"}
+echo "ITK Tag#: $tagNum"
+tagMinor=${tagNum:0:3}
+echo "ITK Tag#  Major.Minor: $tagMinor"
+echo "cmake: ${CMAKE}"
+echo "Build testing: ${BUILD_TESTING}"
+echo "cmake_build_type: ${CMAKE_BUILD_TYPE}"
+nbThreads=8
+echo "#Threads: ${nbThreads}"
+#SlicerExecutionModel
+#Configure
+SEMBuildDir=${SEMRootDir}/SlicerExecutionModel-build_ITK${tag}-${suff}
+if [ $SEMBuildDir ]
+then
+  rm -rf $SEMBuildDir
+fi
+mkdir $SEMBuildDir
+cd $SEMBuildDir
+ITKConfigDIR=$ITKInstallDir/ITK${tag}_THL64_${suff}_Release/lib/cmake/ITK-${tagMinor}
+echo "ITK Config Dir: $ITKConfigDIR"
+echo "Configure SlicerExecutionModel"
+CC=${CC} CXX=${CXX} ${CMAKE} \
+    -DBUILD_TESTING:BOOL=${BUILD_TESTING} \
+    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} \
+    -DITK_DIR:PATH=${ITKConfigDIR} \
+    -DBUILD_SHARED_LIBS:BOOL=$shared \
+    ../$SEMSourceDir
+#Compile
+echo "Compilation"
+make -j ${nbThreads}
 cd $currentDir
+exit 0
 
