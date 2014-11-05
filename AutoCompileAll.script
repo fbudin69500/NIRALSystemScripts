@@ -24,9 +24,9 @@ function compileLib
     `${2}/AutoCompileLatest${1}.script ${args[@]} $shared >> $logFile 2>&1`
     if [ "$?" -eq "0" ]
     then
-      message="Compiled"
+      message="Tried to compiled"
     else
-      message="Abort"
+      message="Stopped before compilation"
     fi
     tail -n 100 "$logFile"| mail -s "$message ${1}-Auto ${tag}-${suff} ${logDay} - $logFile" $email
   done
@@ -35,10 +35,8 @@ function compileLib
 function compileTool
 {
   args=(`less ${2}/../Resources/${1}Args.txt`)
-  echo "here:`less ${2}/../Resources/${1}Args.txt`" >~/test.txt
   logDir=${args[0]}
   unset args[0]
-  echo "there:$logDir" >>~/test.txt
   if [ ! -d $logDir ]
   then
     mkdir $logDir
@@ -46,24 +44,21 @@ function compileTool
   echo "Log directory: ${logDir}"
   logFile="${logDir}/${1}${tag}-${logDay}.log"
   echo "Log file: $logFile"
-  echo "Log file: $logFile" >> ~/test.txt
-  echo "${2}/AutoCompile${1}.script ${args[@]}" >>~/test.txt
   echo "${2}/AutoCompile${1}.script ${args[@]}" > $logFile
   `${2}/AutoCompile${1}.script ${args[@]} >> $logFile 2>&1`
   if [ "$?" -eq "0" ]
   then
-    message="Compiled"
+    message="Tried to compiled"
   else
-    message="Abort"
+    message="Stopped before compilation"
   fi
   tail -n 100 "$logFile"| mail -s "$message ${1}-Auto ${tag} ${logDay} - $logFile" $email
 }
 
-
-echo "plop" > ~/test.txt
+usage="Usage: $0 email daily/namic/libs/slicer"
 if [ $# != 2 ]
 then
-  echo "Usage: $0 email libs/tools"
+  echo "$usage"
   exit 1
 fi
 compilationOptions=$2
@@ -76,20 +71,25 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 #args=`more ~/LocalWork/SystemScripts/Resources/SlicerArgs.txt`
 #~/LocalWork/SystemScripts/Scripts/AutoCompileSlicerTrunk.script $args
-if [ $compilationOptions == "libs" ]
+if [ $compilationOptions == "daily" ]
 then
   compileTool Slicer $DIR
   compileLib VTK $DIR
   compileLib ITK $DIR
   compileLib SEM $DIR
-elif [ $compilationOptions == "tools" ]
+elif [ $compilationOptions == "namic" ]
 then
   compileTool NAMICExternalProjects $DIR
-elif [ $compilationOptions == "debug" ]
+elif [ $compilationOptions == "libs" ]
+then
+  compileLib VTK $DIR
+  compileLib ITK $DIR
+  compileLib SEM $DIR
+elif [ $compilationOptions == "slicer" ]
 then
   compileTool Slicer $DIR
 else
-  echo "Usage: $0 email libs/tools"
+  echo "$usage"
   exit 2
 fi
 
