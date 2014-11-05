@@ -10,5 +10,5 @@ export PythonVersion=2.7.7
 export PYTHONPATH=/tools/Python/Python-${PythonVersion}
 export PYTHON_INCLUDE_DIR=$PYTHONPATH/include/python2.7
 export PYTHON_LIBRARY=$PYTHONPATH/lib/libpython2.7.so
-export PATH=$PYTHONPATH/bin:${PATH}
+export PATH=/NIRAL/tools/git/git-1.8.3.4-linux64/bin:$PYTHONPATH/bin:${PATH}
 export LD_LIBRARY_PATH=$PYTHONPATH/lib:${LD_LIBRARY_PATH}
