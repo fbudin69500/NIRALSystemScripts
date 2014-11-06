@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ $# -lt 2 ]
+then
+  echo "Usage: $0 email command [args]"
+  exit 1
+fi
+email=$1
+shift
+begin=`date`
+echo "Running: $@"
+$@
+end=`date`
+hostname=`hostname`
+printf "Done running command: $@\nRan on: $hostname\nStarted at: $begin\nFinished at: $end\n" | mail -s "Done - $@" $email
