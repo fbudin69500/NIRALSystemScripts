@@ -1,13 +1,13 @@
 #!/bin/bash
 currentDir=`pwd`
-if [ $# -lt 1 ] || [ $# -gt 2 ] 
+if [ $# -lt 0 ] || [ $# -gt 1 ] 
 then
-  echo "Usage: $0 rootDir [SVNrevision#]"
+  echo "Usage: $0 [SVNrevision#]"
   exit 1
 fi
 echo "Current directory: $currentDir"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-resourceFile=$DIR/../Resources/CompileSlicerResources.txt
+resourceFile=$DIR/../Resources/CompileSlicerArgs.txt
 if [ ! -e $resourceFile ]
 then
   echo "Resource file ($resourceFile) not found"
@@ -16,12 +16,12 @@ then
 fi
 echo "Resource file: $resourceFile"
 resources=(`less $resourceFile`)
-qmake=${resources[0]}
+rootDir=${resources[0]}
+qmake=${resources[1]}
 echo "qmake: $qmake"
-rootDir=$1
 if [ $# -eq 2 ]
 then
-  rev=$2
+  rev=$1
   echo "Revision: $rev"
   sourceDir=$rootDir/Slicer-r${rev}
   echo "Source Dir: $sourceDir"
