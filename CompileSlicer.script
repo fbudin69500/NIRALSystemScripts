@@ -1,0 +1,55 @@
+#!/bin/bash
+currentDir=`pwd`
+if [ $# -lt 1 ] || [ $# -gt 2 ] 
+then
+  echo "Usage: $0 rootDir [SVNrevision#]"
+  exit 1
+fi
+echo "Current directory: $currentDir"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+resourceFile=$DIR/../Resources/CompileSlicerResources.txt
+if [ ! -e $resourceFile ]
+then
+  echo "Resource file ($resourceFile) not found"
+  echo "Resource file contains qmake path"
+  exit 1
+fi
+echo "Resource file: $resourceFile"
+resources=(`less $resourceFile`)
+qmake=${resources[0]}
+echo "qmake: $qmake"
+rootDir=$1
+if [ $# -eq 2 ]
+then
+  rev=$2
+  echo "Revision: $rev"
+  sourceDir=$rootDir/Slicer-r${rev}
+  echo "Source Dir: $sourceDir"
+  if [ ! -d $sourceDir ]
+  then
+    mkdir $sourceDir
+  fi
+  svn co http://svn.slicer.org/Slicer4/trunk $sourceDir -r $rev
+else
+  rev=""
+  sourceDir=$rootDir/Slicer-trunk
+  echo "Source Dir: $sourceDir"
+  if [ ! -d $sourceDir ]
+  then
+    mkdir $sourceDir
+  fi
+  svn co http://svn.slicer.org/Slicer4/trunk $sourceDir
+fi
+binaryDir=$sourceDir"-build"
+echo "Binary Dir: $binaryDir"
+if [ ! -d $binaryDir ]
+then
+  mkdir $binaryDir
+fi
+cd $binaryDir
+echo "Configuring"
+cmake -DQT_QMAKE_EXECUTABLE:PATH=$qmake -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF $sourceDir
+echo "Building"
+make -j8
+cd $currentDir
+
