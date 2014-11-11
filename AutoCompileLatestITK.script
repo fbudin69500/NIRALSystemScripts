@@ -76,6 +76,9 @@ CC=$CC CXX=$CXX $CMAKE \
       -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} \
       -DCMAKE_INSTALL_PREFIX:PATH=$ITKInstallDir/ITK${tag}_THL64_${suff}_${CMAKE_BUILD_TYPE} \
       -DBUILD_SHARED_LIBS:BOOL=$shared \
+      -DModule_ITKIODCMTK:BOOL=ON \
+      -DModule_ITKIOPhilipsREC=ON \
+      -DModule_ITKIOMINC=ON \
       ../$ITKSourceDir
 #Compile and install ITK
 echo "Compilation"
