@@ -33,15 +33,6 @@ then
   echo "Current latest tag is a release candidate"
   exit 1
 fi
-#If tag is already compiled on the system, do not compile
-git checkout tags/$tag
-ITKInstallDir=$ITKInstallRootDir/ITK$tag
-echo "Install Dir: $ITKInstallDir"
-if [ -d $ITKInstallDir ]
-then
-  echo "ITK tag ($tag) already compiled"
-  exit 1
-fi
 #Build ITK either in shared or static libraries
 shared=$3
 echo "Shared: $shared"
@@ -52,6 +43,15 @@ else
   suff="stat"
 fi
 echo "Suffix: $suff"
+#If tag is already compiled on the system, do not compile
+git checkout tags/$tag
+ITKInstallDir=$ITKInstallRootDir/ITK$tag/ITK${tag}_THL64_${suff}_${CMAKE_BUILD_TYPE}
+echo "Install Dir: $ITKInstallDir"
+if [ -d $ITKInstallDir ]
+then
+  echo "ITK tag ($tag) already compiled"
+  exit 1
+fi
 tagNum=${tag#"v"}
 echo "Tag#: $tagNum"
 echo "cmake: ${CMAKE}"
@@ -74,7 +74,7 @@ echo "Configure ITK"
 CC=$CC CXX=$CXX $CMAKE \
       -DBUILD_TESTING:BOOL=${BUILD_TESTING} \
       -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} \
-      -DCMAKE_INSTALL_PREFIX:PATH=$ITKInstallDir/ITK${tag}_THL64_${suff}_${CMAKE_BUILD_TYPE} \
+      -DCMAKE_INSTALL_PREFIX:PATH=$ITKInstallDir \
       -DBUILD_SHARED_LIBS:BOOL=$shared \
       -DModule_ITKIODCMTK:BOOL=ON \
       -DModule_ITKIOPhilipsREC=ON \

@@ -35,20 +35,6 @@ then
   echo "Current latest tag is a release candidate"
   exit 1
 fi
-#If tag is already compiled on the system, do not compile
-VTKInstallDir=$VTKInstallRootDir/VTK_${tagNum}
-git checkout tags/$tag 
-if [ -d $VTKInstallDir ]
-then
-  echo "VTK tag ($tag) already compiled"
-  exit 1
-fi
-#Build VTK both in shared and static libraries
-nbThreads=8
-echo "#Threads: ${nbThreads}"
-echo "cmake: ${CMAKE}"
-echo "Build testing: ${BUILD_TESTING}"
-echo "cmake_build_type: ${CMAKE_BUILD_TYPE}"
 shared=$3
 echo "Shared: $shared"
 if [ $shared == ON ]
@@ -70,6 +56,20 @@ else
   QtPythonOptions=""
 fi
 echo "Suffix: $suff"
+#If tag is already compiled on the system, do not compile
+VTKInstallDir=$VTKInstallRootDir/VTK_${tagNum}/VTK_${tagNum}_linux64_${suff}_${CMAKE_BUILD_TYPE}
+git checkout tags/$tag 
+if [ -d $VTKInstallDir ]
+then
+  echo "VTK tag ($tag) already compiled"
+  exit 1
+fi
+#Build VTK both in shared and static libraries
+nbThreads=8
+echo "#Threads: ${nbThreads}"
+echo "cmake: ${CMAKE}"
+echo "Build testing: ${BUILD_TESTING}"
+echo "cmake_build_type: ${CMAKE_BUILD_TYPE}"
 #Check if build directory exists.
 #Removes if and recreate it
 VTKBuildDir=$VTKSourceRootDir/VTK-Auto-$tagNum-build
@@ -86,7 +86,7 @@ echo "Configure VTK"
 CC=${CC} CXX=${CXX} ${CMAKE} \
     -DBUILD_TESTING:BOOL=${BUILD_TESTING} \
     -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} \
-    -DCMAKE_INSTALL_PREFIX:PATH=$VTKInstallDir/VTK_${tagNum}_linux64_${suff}_${CMAKE_BUILD_TYPE} \
+    -DCMAKE_INSTALL_PREFIX:PATH=$VTKInstallDir \
     -DBUILD_SHARED_LIBS:BOOL=$shared \
     $QtPythonOptions \
     ../$VTKSourceDir
