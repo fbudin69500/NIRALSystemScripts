@@ -80,6 +80,7 @@ CC=$CC CXX=$CXX $CMAKE \
       -DModule_ITKIOPhilipsREC=ON \
       -DModule_ITKIOMINC=ON \
       -DModule_MGHIO:BOOL=ON \
+      -DITKV3_COMPATIBILITY:BOOL=ON \
       ../$ITKSourceDir
 #Compile and install ITK
 echo "Compilation"

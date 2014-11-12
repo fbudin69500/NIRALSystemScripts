@@ -41,7 +41,7 @@ if [ $shared == ON ]
 then
   suff="dyn-Qt${QtVersion}-Python${PythonVersion}"
   echo "qmake: ${QMAKE}"
-  echo "python install directory: $PYTHONINSTALL"
+  echo "python install directory: $PYTHONPATH"
   PYTHON=$PYTHONPATH/bin/python
   echo "python: ${PYTHON}"
   QtPythonOptions="-DQT_QMAKE_EXECUTABLE:PATH=${QMAKE} \
@@ -58,6 +58,7 @@ fi
 echo "Suffix: $suff"
 #If tag is already compiled on the system, do not compile
 VTKInstallDir=$VTKInstallRootDir/VTK_${tagNum}/VTK_${tagNum}_linux64_${suff}_${CMAKE_BUILD_TYPE}
+echo "VTK Install Dir: $VTKInstallDir"
 git checkout tags/$tag 
 if [ -d $VTKInstallDir ]
 then
