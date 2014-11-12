@@ -39,7 +39,7 @@ shared=$3
 echo "Shared: $shared"
 if [ $shared == ON ]
 then
-  suff="dyn-Qt${QtVersion}-${PythonVersion}"
+  suff="dyn-Qt${QtVersion}-Python${PythonVersion}"
   echo "qmake: ${QMAKE}"
   echo "python install directory: $PYTHONINSTALL"
   PYTHON=$PYTHONPATH/bin/python
