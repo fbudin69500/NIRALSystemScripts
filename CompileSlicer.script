@@ -11,7 +11,7 @@ resourceFile=$DIR/../Resources/CompileSlicerArgs.txt
 if [ ! -e $resourceFile ]
 then
   echo "Resource file ($resourceFile) not found"
-  echo "Resource file contains qmake path"
+  echo "Resource file contains: 1)Slicer root directory 2)qmake path"
   exit 1
 fi
 echo "Resource file: $resourceFile"

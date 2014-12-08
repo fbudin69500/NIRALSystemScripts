@@ -136,7 +136,7 @@ do
     if [ "$timeStampCurrent" -gt "$timeStampDescription" ]; then
       #Create github diff link
       repository=`expr "$repository" : "\(.*\)\.git"`
-      repository=${repository#"git://github.com/"}
+      repository=`expr "$repository" : ".*github.com\/\(.*\)"`
       diffmessage="https://www.github.com/$repository/compare/$descriptRevision%E2%80%A6$currentgithash"
       cd $sourceDir
       createNewBranch $tool
