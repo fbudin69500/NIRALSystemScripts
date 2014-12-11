@@ -14,9 +14,14 @@ cd $SlicerRootDir
 #Update
 echo "SVN update"
 SLICER_SOURCE=Slicer4-trunk
-cd ${SLICER_SOURCE}
-svn update
-cd ..
+if [ ! -e ${SLICER_SOURCE} ]
+then
+  svn co http://svn.slicer.org/Slicer4/trunk $SLICER_SOURCE
+else
+  cd ${SLICER_SOURCE}
+  svn update
+  cd ..
+fi
 #Recompile
 echo "qmake: ${QMAKE}"
 echo "cmake: ${CMAKE}"
