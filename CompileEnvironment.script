@@ -1,6 +1,6 @@
 #!/bin/bash
-export CC=/usr/bin/gcc
-export CXX=/usr/bin/g++
+export CC=/usr/bin/cc
+export CXX=/usr/bin/c++
 export QtVersion=4.8.6
 export QMAKE=/tools/Qt/Qt${QtVersion}/bin/qmake
 export CMAKE=/tools/CMake/cmake-2.8.12.2/bin/cmake
