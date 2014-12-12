@@ -3,13 +3,16 @@
 createNewBranch ()
 {
   tool=$1
+  mainBranch="$2"
+  localMainBranch="$3"
   #Create new branch for update
-  if [ `git branch | grep -c update-$tool` -ne 0 ]
+  branchName=update-${tool}${localMainBranch}
+  if [ `git branch | grep -c $branchName` -ne 0 ]
   then
-    echo "Removing existing local branch: update-$tool"
-    git branch -D update-$tool
+    echo "Removing existing local branch: $branchName"
+    git branch -D $branchName
   fi
-  git checkout -B update-$tool master
+  git checkout -B $branchName ${mainBranch}
 }
 
 updateDescriptionFile ()
@@ -27,26 +30,63 @@ updateDescriptionFile ()
 
 updateExtensions ()
 {
+  echo "test- ush"
+  tool=$1
   if [ "$2" == "push" ]
   then
-    if [ `git branch | grep -c "origin/update-$tool"` -ne 0 ]
+    localMainBranch="$3"
+    branchName=update-${tool}${localMainBranch}
+    if [ `git branch | grep -c "origin/$branchName"` -ne 0 ]
     then
-    echo "Removing existing remote branch: update-$tool"
-      git push origin :update-$tool
+    echo "Removing existing remote branch: $branchName"
+      git push origin :$branchName
     fi
-    git push origin update-$1 --force
+    git push origin $branchName --force
   fi
 }
 
-if [ $# -ne 1 ] && ( [ $# -ne 2 ] || ([ "$2" != "push" ] && [ "$2" != "clean" ]) )
+ExtensionGit()
+{
+  sourceDir="$1"
+  tool="$2"
+  mainBranch="$3"
+  descriptionFile="$4"
+  descriptRevision="$5"
+  currentrevision="$6"
+  diffmessage="$7"
+  pushcleanArg="$8"
+  localMainBranch="$9"
+  cd $sourceDir
+  createNewBranch $tool $mainBranch $localMainBranch
+  updateDescriptionFile $descriptionFile $descriptRevision $currentrevision
+  git add $descriptionFile
+  git commit -m "ENH: Update $tool from revision $descriptRevision to $currentrevision" -m "" -m "$diffmessage"
+  #Update Extensions
+  updateExtensions $tool $pushcleanArg $localMainBranch
+}
+
+if ( [ $# -ne 2 ] || ( [ "$2" != "master" ] && [ "$2" != "4.3" ] && [ "$2" != "4.4" ] ) ) && ( [ $# -ne 3 ] || ([ "$3" != "push" ] && [ "$3" != "clean" ] ) )
 then
-  echo "Usage: $0 SlicerExtensionBuildDirectory [push|clean]"
+  echo "Usage: $0 SlicerExtensionBuildDirectory [master|4.3|4.4] [push|clean]"
   exit 1
+fi
+mainBranch="$2"
+if [ "$mainBranch" == "master" ]
+then
+  localMainBranch=""
+else
+  localMainBranch="-${mainBranch}"
+fi
+pushcleanArg="$3"
+#pushclean cannot be empty
+if [ "$pushcleanArg" == "" ]
+then
+  pushcleanArg="none"
 fi
 currentDir=`pwd`
 #Define all our tools included in ExtensionsIndex
 toolsNIRALList=(DTIAtlasBuilder DTIPrep DTIProcess DTIAtlasFiberAnalyzer FiberViewerLight \
-                ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance)
+                ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance MeshToLabelMap)
 #Find real binary directory
 cd $1
 var=`more CMakeCache.txt | grep SlicerExtensions_BINARY_DIR`
@@ -58,25 +98,28 @@ sourceDir=${var#"Slicer_EXTENSION_DESCRIPTION_DIR:PATH="}
 echo "Slicer Extension Source Directory: $sourceDir"
 #Update ExtensionsIndex source code
 cd $sourceDir
-#Clean i $2 == "clean"
-if [ "$2" == "clean" ]
+#Clean if $pushcleanArg == "clean"
+if [ "$pushcleanArg" == "clean" ]
 then
   git fetch origin
   git checkout master
-  var=(`git branch | grep "update-"`)
-  for branchName in `git branch | grep "update-"`
+  for tool in ${toolsNIRALList[@]}
   do
-    name=`expr "$branchName" : ".*\(update-.*\) *$"`
+    branchName=`git branch | grep -e "update-${tool}${localMainBranch}$"`
+    name=`expr "$branchName" : ".*\(update-.*\)$"`
     if [ "$name" != "" ]; then
       echo "Removing existing local branch: $branchName"
       git branch -D $branchName
     fi
   done
-  for branchName in `git branch -a | grep "origin/update-"`
+  for tool in ${toolsNIRALList[@]}
   do
-    name=`expr "$branchName" : ".*\(update-.*\) *$"`
-    echo "Removing existing remote branch: $name"
-    git push origin :$name
+    branchName=`git branch -a | grep -e "origin/update-${tool}${localMainBranch}$"`
+    name=`expr "$branchName" : ".*\(update-.*\)$"`
+    if [ "$name" != "" ]; then
+      echo "Removing existing remote branch: $name"
+      git push origin :$name
+    fi
   done
   exit 0
 fi
@@ -86,9 +129,9 @@ then
   git remote add upstream git://github.com/Slicer/ExtensionsIndex
 fi
 git fetch upstream
-git checkout master
-git reset --hard upstream/master
-git push origin master
+git checkout $mainBranch
+git reset --hard upstream/$mainBranch
+git push origin $mainBranch
 #For all the tools we want to update, go download latest version and compare with
 #version that is currently included in this project (ExtensionsIndex). If a
 #newer version exists, replace current version included in this project with
@@ -138,13 +181,7 @@ do
       repository=`expr "$repository" : "\(.*\)\.git"`
       repository=`expr "$repository" : ".*github.com\/\(.*\)"`
       diffmessage="https://www.github.com/$repository/compare/$descriptRevision%E2%80%A6$currentgithash"
-      cd $sourceDir
-      createNewBranch $tool
-      updateDescriptionFile $descriptionFile $descriptRevision $currentgithash
-      git add $descriptionFile
-      git commit -m "ENH: Update $tool from revision $descriptRevision to $currentgithash" -m "" -m "$diffmessage"
-      #Update Extensions
-      updateExtensions $tool $2
+      ExtensionGit $sourceDir $tool $mainBranch $descriptionFile $descriptRevision $currentgithash "$diffmessage" $pushcleanArg $localMainBranch
     fi
     continue
   fi
@@ -179,13 +216,7 @@ do
       do
         diffmessage=$diffmessage`svn log $svnUser $svnPassword -r $i`$'\n'
       done
-      cd $sourceDir
-      createNewBranch $tool
-      updateDescriptionFile $descriptionFile $descriptRevision $currentrevision
-      git add $descriptionFile
-      git commit -m "ENH: Update $tool from revision $descriptRevision to $currentrevision" -m "" -m "$diffmessage"
-      #Update Extensions
-      updateExtensions $tool $2
+      ExtensionGit $sourceDir $tool $mainBranch $descriptionFile $descriptRevision $currentrevision "$diffmessage" $pushcleanArg $localMainBranch
     fi
     continue
   else
