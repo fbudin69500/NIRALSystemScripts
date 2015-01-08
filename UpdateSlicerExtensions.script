@@ -166,7 +166,7 @@ do
     else
       cd $binaryDir/$tool
       echo "Pulling"
-      git pull
+      git pull origin master
     fi
     #get current (=latest) commit hash
     currentgithash=`git rev-parse HEAD`
