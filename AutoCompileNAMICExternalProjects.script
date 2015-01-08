@@ -20,7 +20,7 @@ then
   git clone git@github.com:fbudin69500/NAMICExternalProjects.git $SOURCE_DIR
 else
   cd $SOURCE_DIR
-  git pull
+  git pull origin master
 fi
 cd $RootDir
 #Recompile

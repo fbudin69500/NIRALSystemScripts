@@ -22,7 +22,7 @@ then
   cd $VTKSourceDir
 else
   cd $VTKSourceDir
-  git pull
+  git fetch
 fi
 #get last tag
 tag=`git describe --abbrev=0 --tags`

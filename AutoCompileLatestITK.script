@@ -22,7 +22,7 @@ then
   cd $ITKSourceDir
 else
   cd $ITKSourceDir
-  git pull
+  git fetch
 fi
 #get last tag
 tag=`git describe --abbrev=0 --tags`
