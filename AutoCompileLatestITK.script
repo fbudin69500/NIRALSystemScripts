@@ -1,7 +1,7 @@
 #!/bin/bash
-if [ $# != 3 ]
+if [ $# != 3 ] && [ $# != 5 ]
 then
-  echo "Usage: $0 ITKSourceRootDir ITKInstallRootDir [ON/OFF]"
+  echo "Usage: $0 ITKSourceRootDir ITKInstallRootDir [VTKSourceRootDir VTKInstallRootDir] ON/OFF"
   echo "ON/OFF: Build shared libraries"
   exit 2
 fi
@@ -13,6 +13,45 @@ scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
 source $scriptDIR/CompileEnvironment.script
 currentDir=`pwd`
 echo "Current directory: ${currentDir}"
+#Check if VTK directories are specified
+if [ $# == 5 ]
+then
+  VTKSourceRootDir="$3"
+  echo "VTKSourceRootDir: $VTKSourceRootDir"
+  VTKInstallRootDir="$4"
+  echo "VTKInstallRootDir: $VTKInstallRootDir"
+  itkVTKGlueOption="-DModule_ITKVtkGlue:BOOL=ON "
+  #Check VTK tag
+  VTKSourceDir=VTK-Auto
+  cd $VTKSourceRootDir/$VTKSourceDir
+  #get last tag
+  tag=`git describe --abbrev=0 --tags`
+  echo "Last tag (VTK): $tag"
+  VTKtagNum=${tag#"v"}
+  echo "Last tag #(VTK): $VTKtagNum"
+  #If Release Candidate, do nothing
+  if [ "`echo $tag |grep rc`" != "" ]
+  then
+    echo "Current latest tag is a release candidate"
+    exit 1
+  fi
+  #If tag is not already compiled on the system, exit
+  #ITK needs VTK if VTK options are given
+  VTKInstallDir=$VTKInstallRootDir/VTK_$VTKtagNum
+  if [ ! -d $VTKInstallDir ]
+  then
+    echo "VTK tag ($tag) is not compiled. You requested to build ITK with VTK."
+    exit 3
+  fi
+  tagMinor=${VTKtagNum:0:3}
+  echo "VTK Tag#  Major.Minor: $tagMinor"
+  #Build ITK either in shared or static libraries
+  shared=$5
+else
+  itkVTKGlueOption=""
+  #Build ITK either in shared or static libraries
+  shared=$3
+fi
 #Download ITK
 ITKSourceDir=ITK-Auto
 cd $ITKSourceRootDir
@@ -34,7 +73,6 @@ then
   exit 1
 fi
 #Build ITK either in shared or static libraries
-shared=$3
 echo "Shared: $shared"
 if [ $shared == ON ]
 then
@@ -43,6 +81,13 @@ else
   suff="stat"
 fi
 echo "Suffix: $suff"
+#Find VTK Config Dir
+if [ $# == 5 ]
+then
+  VTKConfigDIR=`find $VTKInstallDir -name VTK_${VTKtagNum}_linux64_${suff}\*_Release`
+  VTKConfigDIR=${VTKConfigDIR}/lib/cmake/vtk-${tagMinor}
+  echo "VTKConfigDir=$VTKConfigDIR"
+fi
 #If tag is already compiled on the system, do not compile
 git checkout tags/$tag
 ITKInstallDir=$ITKInstallRootDir/ITK$tag/ITK${tag}_THL64_${suff}_${CMAKE_BUILD_TYPE}
@@ -81,6 +126,8 @@ CC=$CC CXX=$CXX $CMAKE \
       -DModule_ITKIOMINC=ON \
       -DModule_MGHIO:BOOL=ON \
       -DITKV3_COMPATIBILITY:BOOL=ON \
+      -DVTK_DIR:PATH=${VTKConfigDIR} \
+      ${itkVTKGlueOption} \
       ../$ITKSourceDir
 #Compile and install ITK
 echo "Compilation"

@@ -20,6 +20,9 @@ function compileLib
     fi
     logFile="${logDir}/${1}${tag}-${suff}-${logDay}.log"
     echo "Log file: $logFile"
+echo "*********************************"
+echo "${2}/AutoCompileLatest${1}.script ${args[@]} $shared"
+echo "*********************************"
     echo "${2}/AutoCompileLatest${1}.script ${args[@]} $shared" > $logFile
     `${2}/AutoCompileLatest${1}.script ${args[@]} $shared >> $logFile 2>&1`
     if [ "$?" -eq "0" ]
@@ -69,8 +72,6 @@ echo "log day: $logDay"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-#args=`more ~/LocalWork/SystemScripts/Resources/SlicerArgs.txt`
-#~/LocalWork/SystemScripts/Scripts/AutoCompileSlicerTrunk.script $args
 if [ $compilationOptions == "daily" ]
 then
   compileTool Slicer $DIR
