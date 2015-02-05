@@ -36,7 +36,7 @@ then
   echo "Removing it"
   rm -rf $BINARY_DIR
 fi
-echo "Creating build directory: BINARY_DIR"
+echo "Creating build directory: $BINARY_DIR"
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 VTK_VERSION_MAJOR=6
