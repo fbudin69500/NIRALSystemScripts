@@ -48,7 +48,7 @@ then
 fi
 cd $binaryDir
 echo "Configuring"
-cmake -DQT_QMAKE_EXECUTABLE:PATH=$qmake -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF $sourceDir
+cmake -DQT_QMAKE_EXECUTABLE:PATH=$qmake -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF -DSlicer_USE_PYTHONQT_WITH_OPENSSL:BOOL=ON $sourceDir
 echo "Building"
 make -j8
 cd $currentDir

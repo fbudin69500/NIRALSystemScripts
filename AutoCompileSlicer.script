@@ -41,8 +41,13 @@ mkdir $BINARY_DIR
 cd $BINARY_DIR
 VTK_VERSION_MAJOR=6
 echo "Configuration"
-CC=${CC} CXX=${CXX} ${CMAKE} -DBUILD_TESTING:BOOL=${BUILD_TESTING} -DQT_QMAKE_EXECUTABLE:FILEPATH=${QMAKE} \
-   -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DVTK_VERSION_MAJOR:STRING=${VTK_VERSION_MAJOR} ../${SLICER_SOURCE}
+CC=${CC} CXX=${CXX} ${CMAKE} -DBUILD_TESTING:BOOL=${BUILD_TESTING} \
+                             -DQT_QMAKE_EXECUTABLE:FILEPATH=${QMAKE} \
+                             -DSlicer_USE_PYTHONQT_WITH_OPENSSL:BOOL=ON \
+                             -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} \
+                             -DVTK_VERSION_MAJOR:STRING=${VTK_VERSION_MAJOR} \
+                             -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF \
+                             ../${SLICER_SOURCE}
 echo "Compilation"
 make -j ${nbThreads}
 cd $currentDir
