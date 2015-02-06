@@ -30,7 +30,6 @@ updateDescriptionFile ()
 
 updateExtensions ()
 {
-  echo "test- ush"
   tool=$1
   if [ "$2" == "push" ]
   then
