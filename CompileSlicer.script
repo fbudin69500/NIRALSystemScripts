@@ -19,8 +19,13 @@ source $scriptDIR/../Resources/CompileEnvironment.script
 echo "Resource file: $resourceFile"
 resources=(`less $resourceFile`)
 rootDir=${resources[0]}
+qmake=${resources[1]}
 echo "qmake: $QMAKE"
-if [ $# -eq 2 ]
+if [ ! -d $rootDir ]
+then
+  mkdir $rootDir
+fi
+if [ $# -eq 1 ]
 then
   rev=$1
   echo "Revision: $rev"
@@ -47,10 +52,15 @@ if [ ! -d $binaryDir ]
 then
   mkdir $binaryDir
 fi
+system=`uname`
+if [ "$system" == "Darwin" ]
+then
+  extraArgs="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.10"
+fi
 cd $binaryDir
 echo "Configuring"
-cmake -DQT_QMAKE_EXECUTABLE:PATH=$QMAKE -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF -DSlicer_USE_PYTHONQT_WITH_OPENSSL:BOOL=ON $sourceDir
+cmake -DQT_QMAKE_EXECUTABLE:PATH=$qmake -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF -DSlicer_USE_PYTHONQT_WITH_OPENSSL:BOOL=ON $extraArgs $sourceDir
 echo "Building"
-make -j8
+make -j3
 cd $currentDir
 

@@ -1,0 +1,4 @@
+#!/bin/bash
+export BUILD_TESTING=ON
+export CMAKE_BUILD_TYPE=Release
+
