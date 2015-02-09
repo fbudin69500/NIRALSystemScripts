@@ -10,7 +10,8 @@ echo "ITKSourceRootDir: $ITKSourceRootDir"
 ITKInstallRootDir=$2
 echo "ITKInstallRootDir: $ITKInstallRootDir"
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
-source $scriptDIR/CompileEnvironment.script
+source $scriptDIR/ConfigurationVariables.script
+source $scriptDIR/../Resources/CompileEnvironment.script
 currentDir=`pwd`
 echo "Current directory: ${currentDir}"
 #Check if VTK directories are specified

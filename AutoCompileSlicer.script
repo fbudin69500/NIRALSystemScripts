@@ -7,7 +7,8 @@ fi
 SlicerRootDir=$1
 echo "Slicer root directory: ${SlicerRootDir}"
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
-source $scriptDIR/CompileEnvironment.script
+source $scriptDIR/ConfigurationVariables.script
+source $scriptDIR/../Resources/CompileEnvironment.script
 currentDir=`pwd`
 echo "Current directory: ${currentDir}"
 cd $SlicerRootDir

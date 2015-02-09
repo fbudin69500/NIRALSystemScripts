@@ -11,14 +11,15 @@ resourceFile=$DIR/../Resources/CompileSlicerArgs.txt
 if [ ! -e $resourceFile ]
 then
   echo "Resource file ($resourceFile) not found"
-  echo "Resource file contains: 1)Slicer root directory 2)qmake path"
+  echo "Resource file contains: 1)Slicer root directory"
   exit 1
 fi
+source $scriptDIR/ConfigurationVariables.script
+source $scriptDIR/../Resources/CompileEnvironment.script
 echo "Resource file: $resourceFile"
 resources=(`less $resourceFile`)
 rootDir=${resources[0]}
-qmake=${resources[1]}
-echo "qmake: $qmake"
+echo "qmake: $QMAKE"
 if [ $# -eq 2 ]
 then
   rev=$1
@@ -48,7 +49,7 @@ then
 fi
 cd $binaryDir
 echo "Configuring"
-cmake -DQT_QMAKE_EXECUTABLE:PATH=$qmake -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF -DSlicer_USE_PYTHONQT_WITH_OPENSSL:BOOL=ON $sourceDir
+cmake -DQT_QMAKE_EXECUTABLE:PATH=$QMAKE -DSlicer_USE_VTK_DEBUG_LEAKS:BOOL=OFF -DSlicer_USE_PYTHONQT_WITH_OPENSSL:BOOL=ON $sourceDir
 echo "Building"
 make -j8
 cd $currentDir
