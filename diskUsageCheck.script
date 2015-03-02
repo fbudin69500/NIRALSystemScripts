@@ -31,7 +31,7 @@ endif
 set startTimeStamp=`date '+%Y.%m.%d~%H:%M:%S'`
 echo $startTimeStamp
 set logDay=`date '+%Y.%m.%d'`
-set logFile="${logDir}${logDay}-${name}.log"
+set logFile="${logDir}/${logDay}-${name}.log"
 echo "$logFile"
 if( -e "$logFile" ) then
   echo "log file called $logFile already exists"
