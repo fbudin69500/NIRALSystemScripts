@@ -6,7 +6,19 @@ then
 endif
 fi
 scriptDIR="$( cd "$( dirname "$0" )" && pwd )"
+if [ ! -e "$scriptDIR/ConfigurationVariables.script" ]
+then
+  echo "ConfigurationVariables.script not found. It should be there:"
+  echo "$scriptDIR/ConfigurationVariables.script"
+  exit 1
+fi
 source $scriptDIR/ConfigurationVariables.script
+if [ ! -e "$scriptDIR/../Resources/CompileEnvironment.script" ]
+then
+  echo "CompileEnvironment.script not found. It should be there:"
+  echo "$scriptDIR/../Resources/CompileEnvironment.script"
+  exit 1
+fi
 source $scriptDIR/../Resources/CompileEnvironment.script
 currentDir=`pwd`
 echo "Current directory: ${currentDir}"
