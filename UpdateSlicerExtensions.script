@@ -84,7 +84,7 @@ then
 fi
 currentDir=`pwd`
 #Define all our tools included in ExtensionsIndex
-toolsNIRALList=(DTIAtlasBuilder DTIPrep DTIProcess DTIAtlasFiberAnalyzer FiberViewerLight \
+toolsNIRALList=(CMFreg DTIAtlasBuilder DTIPrep DTIProcess DTIAtlasFiberAnalyzer FiberViewerLight \
                 ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance MeshToLabelMap)
 #Find real binary directory
 cd $1
