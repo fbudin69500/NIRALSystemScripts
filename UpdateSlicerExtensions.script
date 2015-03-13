@@ -128,6 +128,14 @@ then
   git remote add upstream git://github.com/Slicer/ExtensionsIndex
 fi
 git fetch upstream
+##################################################################
+#Checks if mainBranch already exists locally. Otherwise we need to check it out.
+if [ `git branch -a |grep -e "${mainBranch}$" |grep -ve "[a-z]" |grep -c ${mainBranch}` -eq 0 ]
+then
+  echo "Branch was not detected locally, we need to checkout it out from the remote repository"
+  git checkout -b ${mainBranch} origin/${mainBranch}
+fi
+##################################################
 git checkout $mainBranch
 git reset --hard upstream/$mainBranch
 git push origin $mainBranch
