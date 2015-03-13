@@ -9,6 +9,8 @@ import errno
 import shutil
 import argparse
 import sys
+import tempfile
+import platform
 
 parser = argparse.ArgumentParser(
 prog=sys.argv[0],
@@ -16,8 +18,12 @@ description="This script downloads the nightly package of Slicer",
 usage=sys.argv[0]+" [<args>]")
 parser.add_argument("output_folder", help="Directory to install the nightly package")
 parser.add_argument("--log_file", help="File in which the log of the process will be stored")
+parser.add_argument('--remove_older_nightly_slicer', action="store_true", default=False)
+parser.add_argument('--keep_downloaded_archive', action="store_true", default=False)
 args = parser.parse_args()
 output_folder = args.output_folder
+erase_older_nightly_slicer = args.remove_older_nightly_slicer
+keep_downloaded_archive = args.keep_downloaded_archive
 if args.log_file:
   try:
     log = open(args.log_file, 'w')
@@ -26,14 +32,17 @@ if args.log_file:
     exit(1)
 else:
   log = sys.stdout
-# Hard coded parameters
-output_file_name = "/tmp/Slicer-nightly.tar.gz"
-erase_older_nightly_slicer = True
 # Tries to find URL to download Slicer nightly
 download_page_url = 'http://download.slicer.org'
 download_url = ''
 # TO DO: improve search for URLs to work for Windows and MacOS
-regexForLinux = 'nightly 64 bit archive'
+current_system = platform.system()
+if(current_system == 'Linux'):
+  regexForLinux = 'nightly 64 bit archive'
+else:
+  print("System detected:", current_system)
+  print("System not yet supported")
+  exit(1)
 try:
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0')]
@@ -49,17 +58,18 @@ try:
     found = re.search('<a href="(.+?)" class="btn btn-warning">'+regexForLinux, html).group(1)
     # Creation of the "absolute URL"
     download_url = "http://download.slicer.org"+found
-    print("URL to download Slicer nightly:",download_url,file=log)
+    print("URL to download Slicer nightly:", download_url, file=log)
 except AttributeError:
-    print("Did not find download URL",file=log)
+    print("Did not find download URL", file=log)
     exit(1)
 
 # Download Slicer
 u = urllib2.urlopen(download_url)
-f = open(output_file_name, 'wb')
+f = tempfile.NamedTemporaryFile('wb', suffix=".tar.gz", prefix='tmp_Slicer', delete=False)
+tempFileName = f.name
 meta = u.info()
 file_size = int(meta.getheaders("Content-Length")[0])
-print ("Downloading in: ", output_file_name, "(",file_size/1024/1024,"MB)",sep="",file=log)
+print ("Downloading in : ", tempFileName," (", file_size/1024/1024,"MB)", sep="", file=log)
 
 file_size_dl = 0
 block_sz = 8192
@@ -90,7 +100,7 @@ if erase_older_nightly_slicer:
             pass
 # Get Slicer directory
 print("Looking for Slicer nightly directory name (exploring the archive)",file=log)
-process = subprocess.Popen(["tar", "-tf", output_file_name], stdout=subprocess.PIPE)
+process = subprocess.Popen(["tar", "-tf", tempFileName], stdout=subprocess.PIPE)
 output = process.communicate()[0]
 process.wait()
 current_nightly = re.search('(.+?)'+os.sep+'Slicer', output).group(1)
@@ -104,7 +114,7 @@ except OSError as exc:  # Python >2.5
         raise
 # Extracting Slicer archive
 print("Extracting Slicer archive in",output_folder,file=log)
-process = subprocess.Popen(["tar", "-xvzf", output_file_name, "-C", output_folder], stdout=subprocess.PIPE)
+process = subprocess.Popen(["tar", "-xvzf", tempFileName, "-C", output_folder], stdout=subprocess.PIPE)
 output = process.communicate()[0]
 process.wait()
 if os.name == "posix":
@@ -119,3 +129,6 @@ if os.name == "posix":
     print("New link created",file=log)
 if log is not sys.stdout:
   log.close()
+# Remove temporary file
+if not keep_downloaded_archive:
+  os.remove(tempFileName)
