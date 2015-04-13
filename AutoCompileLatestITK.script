@@ -74,7 +74,8 @@ then
   cd $ITKSourceDir
 else
   cd $ITKSourceDir
-  git fetch
+  git fetch --all
+  git reset --hard origin/master
 fi
 #get last tag
 tag=`git describe --abbrev=0 --tags`

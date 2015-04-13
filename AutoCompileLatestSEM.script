@@ -57,7 +57,8 @@ then
   git clone https://github.com/Slicer/SlicerExecutionModel.git $SEMSourceDir
 else
   cd $SEMSourceDir
-  git pull origin master
+  git fetch --all
+  git reset --hard origin/master
 fi
 #Build SlicerExecutionModel both in shared and static libraries
 shared=$4
