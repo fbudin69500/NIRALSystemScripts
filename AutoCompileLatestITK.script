@@ -139,7 +139,7 @@ CC=$CC CXX=$CXX $CMAKE \
       -DModule_ITKIOPhilipsREC=ON \
       -DModule_ITKIOMINC=ON \
       -DModule_MGHIO:BOOL=ON \
-      -DITKV3_COMPATIBILITY:BOOL=ON \
+      -DITKV3_COMPATIBILITY:BOOL=OFF \
       -DModule_ITKReview:BOOL=ON \
       -DVTK_DIR:PATH=${VTKConfigDIR} \
       ${itkVTKGlueOption} \
