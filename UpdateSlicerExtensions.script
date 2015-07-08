@@ -85,7 +85,7 @@ fi
 currentDir=`pwd`
 #Define all our tools included in ExtensionsIndex
 toolsNIRALList=(CMFreg DTIAtlasBuilder DTIPrep DTIProcess DTIAtlasFiberAnalyzer FiberViewerLight \
-                ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance MeshToLabelMap)
+                ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance MeshToLabelMap Q3DC EasyClip AnglePlanesExtension MeshStatisticsExtension PickAndPaintExtension)
 #Find real binary directory
 cd $1
 var=`more CMakeCache.txt | grep SlicerExtensions_BINARY_DIR`
@@ -219,7 +219,7 @@ do
     if [ $currentrevision -gt $descriptRevision ] ;then
       #get tool logs and copy them to the ExtensionIndex commit message
       diffmessage=""
-      for i in `seq $currentrevision -1 $descriptRevision`
+      for i in `seq $currentrevision -1 $((descriptRevision+1))`
       do
         diffmessage=$diffmessage`svn log $svnUser $svnPassword -r $i`$'\n'
       done
