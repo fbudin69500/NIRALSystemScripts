@@ -85,7 +85,10 @@ fi
 currentDir=`pwd`
 #Define all our tools included in ExtensionsIndex
 toolsNIRALList=(CMFreg DTIAtlasBuilder DTIPrep DTIProcess DTIAtlasFiberAnalyzer FiberViewerLight \
-                ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance MeshToLabelMap Q3DC EasyClip AnglePlanesExtension MeshStatisticsExtension PickAndPaintExtension ResampleDTIlogEuclidean)
+                ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance MeshToLabelMap \
+                Q3DC EasyClip AnglePlanesExtension MeshStatisticsExtension PickAndPaintExtension \
+                ResampleDTIlogEuclidean DeveloperToolsForExtensions \
+               )
 #Find real binary directory
 cd $1
 var=`more CMakeCache.txt | grep SlicerExtensions_BINARY_DIR`
