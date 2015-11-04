@@ -87,7 +87,7 @@ currentDir=`pwd`
 toolsNIRALList=(CMFreg DTIAtlasBuilder DTIPrep DTIProcess DTIAtlasFiberAnalyzer FiberViewerLight \
                 ShapePopulationViewer SPHARM-PDM IntensitySegmenter ModelToModelDistance MeshToLabelMap \
                 Q3DC EasyClip AnglePlanesExtension MeshStatisticsExtension PickAndPaintExtension \
-                ResampleDTIlogEuclidean DeveloperToolsForExtensions \
+                ResampleDTIlogEuclidean DeveloperToolsForExtensions DTI-Reg\
                )
 #Find real binary directory
 cd $1
