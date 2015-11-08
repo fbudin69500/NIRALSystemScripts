@@ -1,0 +1,2 @@
+Copy Resources-to-configure/ into ../Resources
+Configure each file to replace @Var@ by appropriate value

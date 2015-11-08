@@ -1,0 +1,1 @@
+@ITKlogDir@ @ITKSourceAndCompile@ @ITKInstall@ @VTKSourceAndCompile@ @VTKInstall@

@@ -1,0 +1,12 @@
+#!/bin/bash
+export CC=/usr/bin/cc
+export CXX=/usr/bin/c++
+export QtVersion=4.8.6
+export QMAKE=/usr/bin/qmake
+export CMAKE=/usr/bin/cmake
+export PythonVersion=2.7.7
+export PYTHONPATH=
+export PYTHON_INCLUDE_DIR=$PYTHONPATH/include/python2.7
+export PYTHON_LIBRARY=$PYTHONPATH/lib/libpython2.7.so
+export PATH=@SVN@:@git@:$PYTHONPATH/bin:${PATH}
+export LD_LIBRARY_PATH=$PYTHONPATH/lib:${LD_LIBRARY_PATH}
